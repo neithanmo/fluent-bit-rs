@@ -1,0 +1,14 @@
+[package]
+name = "fluent-bit-rs"
+version = "0.1.0"
+authors = ["neithanmo <neithanmo@gmail.com>"]
+edition = "2018"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+
+[dependencies]
+libc = "0.2"
+
+[lib]
+crate-type=["rlib", "cdylib"]
+
