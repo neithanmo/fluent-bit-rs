@@ -1,6 +1,6 @@
 [package]
 name = "fluentbit"
-version = "0.1.0"
+version = "0.1.1-alpha.0"
 authors = ["neithanmo <neithanmo@gmail.com>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
