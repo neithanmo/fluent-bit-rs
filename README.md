@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/neithanmo/fluent-bit-rs.svg?branch=master)](https://travis-ci.org/neithanmo/fluent-bit-rs) [![](https://img.shields.io/crates/v/fluentbit.svg)](https://crates.io/crates/fluentbit) 
 # fluentbit    
 This crate aims to build output plugins for [Fluent-bit](https://fluentbit.io/).
 It is based on  the Go interface for writting output plugins.
