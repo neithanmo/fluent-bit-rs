@@ -7,6 +7,10 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 keywords = ["log", "logger"]
 repository = "https://github.com/neithanmo/fluent-bit-rs"
+publish = true
+description = """
+fluentbit is a library to build output plugins for Fluent-bit
+"""
 
 [dependencies]
 libc = "0.2"
