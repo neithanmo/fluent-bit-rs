@@ -5,6 +5,8 @@ authors = ["neithanmo <neithanmo@gmail.com>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
 readme = "README.md"
+keywords = ["log", "logger"]
+repository = "https://github.com/neithanmo/fluent-bit-rs"
 
 [dependencies]
 libc = "0.2"
