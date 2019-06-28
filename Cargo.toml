@@ -1,5 +1,5 @@
 [package]
-name = "fluent-bit-rs"
+name = "fluentbit"
 version = "0.1.0"
 authors = ["neithanmo <neithanmo@gmail.com>"]
 edition = "2018"
