@@ -2,14 +2,10 @@ extern crate fluentbit;
 use fluentbit::*;
 
 extern crate rmpv;
-extern crate rmp_serde;
 extern crate serde_json;
-extern crate serde_transcode;
 
-use serde_json::{Serializer, Deserializer};
-use std::io::{Read, Write};
+extern crate serde;
 
-use std::io;
 
 #[derive(Default)]
 struct JsonExample{}
@@ -29,12 +25,11 @@ impl FLBPluginMethods for JsonExample{
 
     fn plugin_flush(&mut self, data: &[u8]) -> FLBResult{
 
-        //let value: rmpv::Value = rmp_serde::decode::from_slice(&data).unwrap();
-        let des = rmp_serde::encoder::Serializer::from_slice(&data);
-        println!("{:?}", des.deserialize_byte_buf(std::io));
+        let mut value = data.clone();
+        let value: rmpv::Value = rmpv::decode::value::read_value(&mut value).unwrap();
         let json = serde_json::to_string(&value).unwrap();
-
-        println!("{}", json);
+        
+        println!("{:?}", json);
         Ok(())
     }
 
