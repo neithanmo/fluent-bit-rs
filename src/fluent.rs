@@ -177,7 +177,7 @@ macro_rules! create_boilerplate{
 
         #[no_mangle]
         pub extern fn FLBPluginInit(ptr: *mut c_void) -> c_int {
-            match handler.lock().unwrap().plugin_exit(){
+            match handler.lock().unwrap().plugin_init(){
                 Ok(()) => FLB_OK as c_int,
                 Err(e) => return i32::from(e) as c_int,
             }
