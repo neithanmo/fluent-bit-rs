@@ -3,9 +3,7 @@ use fluentbit::*;
 
 extern crate rmpv;
 extern crate serde_json;
-
 extern crate serde;
-
 
 #[derive(Default)]
 struct JsonExample{}
@@ -27,9 +25,10 @@ impl FLBPluginMethods for JsonExample{
 
         let mut value = data.clone();
         let value: rmpv::Value = rmpv::decode::value::read_value(&mut value).unwrap();
-        let json = serde_json::to_string(&value).unwrap();
+        let json = serde_json::to_string_pretty(&value).unwrap();
         
-        println!("{:?}", json);
+        println!("\n{}", json);
+
         Ok(())
     }
 

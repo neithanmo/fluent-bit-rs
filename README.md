@@ -26,7 +26,7 @@ your plugin was written in Rust. To enable external plugins'  support  you have 
 ```
 $ cd build/
 $ cmake -DFLB_DEBUG=On -DFLB_PROXY_GO=On ../
-$ make
+$ make && mske install
 ```
 Once compiled, you can see a new option in the binary -e which stands for external plugin, e.g:
 ```
@@ -51,44 +51,52 @@ Now here is a simple output plugin
 extern crate fluentbit;
 use fluentbit::*;
 
+extern crate rmpv;
+extern crate serde_json;
+
+extern crate serde;
+
+
 #[derive(Default)]
-struct MyPluginDemo{
-    num_flushes: u32,
-}
+struct JsonExample{}
 
-impl FLBPluginMethods for MyPluginDemo{
+impl FLBPluginMethods for JsonExample{
     
-    fn plugin_register(&mut self, info: &mut PluginInfo) -> FLBResult {
+    fn plugin_register(&mut self, info: &mut PluginInfo) -> FLBResult{
         info.name = "rustout".into();
-        info.description = "It is a default description".into();
+        info.description = "This is a default description".into();
         Ok(())
     }
 
-    fn plugin_init(&mut self) -> FLBResult {
+    fn plugin_init(&mut self) -> FLBResult{
+        println!("default init");
         Ok(())
     }
 
-    fn plugin_flush(&mut self, data: &[u8]) -> FLBResult {
-        println!("data: {:?}", data);
-        self.num_flushes += 1;
-        println!("FLUSH NUMBER {}", self.num_flushes);
+    fn plugin_flush(&mut self, data: &[u8]) -> FLBResult{
+
+        let mut value = data.clone();
+        let value: rmpv::Value = rmpv::decode::value::read_value(&mut value).unwrap();
+        let json = serde_json::to_string_pretty(&value).unwrap();
+        
+        println!("\n{}", json);
         Ok(())
     }
 
-    fn plugin_exit(&mut self) -> FLBResult {
+    fn plugin_exit(&mut self) -> FLBResult{
         println!("exiting");
         Ok(())
     }
     
 }
 
-create_boilerplate!(MyPluginDemo::default());
+create_boilerplate!(JsonExample::default());
 ```
 
 ## Test your plugin:
 ```
 cargo build --release
-fluent-bit -e target/release/libexample.so -i cpu -o "rustout"
+fluent-bit -e target/release/libjson.so -i cpu -o "rustout"
 ```
 ## License
 
