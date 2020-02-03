@@ -80,6 +80,8 @@ pub trait FLBPluginMethods {
 macro_rules! create_boilerplate{
     ($e:expr) => {
 
+        use std::panic::{self, AssertUnwindSafe};
+
         use libc::{c_char, c_int, c_void};
         use std::ffi::{CStr, CString, NulError};
         use std::slice;
@@ -141,65 +143,86 @@ macro_rules! create_boilerplate{
         pub type FLBOutPlugin = flbgo_output_plugin;
 
        lazy_static! {
-            static ref handler: Mutex<Box<FLBPluginMethods + Send>> = Mutex::new(Box::new($e));
+            static ref handler: Mutex<Box<dyn FLBPluginMethods + Send>> = Mutex::new(Box::new($e));
        }
+
+       // Catch panics
+       fn catch<F: FnOnce() -> c_int>(f: F) -> Option<c_int> {
+            match panic::catch_unwind(AssertUnwindSafe(f)) {
+                Ok(ret) => Some(ret),
+                Err(_) => {
+                    exit(std::line!(), std::file!());
+                    None
+                }
+            }
+        }
+
+        fn exit(line: u32, file: &str) {
+            eprintln!("catching panic generated at: {} in file: {}", line, file);
+            eprintln!("exiting process!");
+            std::process::exit(-1);
+        }
 
         #[no_mangle]
         pub extern fn FLBPluginRegister( ptr: *mut c_void) -> c_int {
-            unsafe{
+            catch(|| unsafe {
+
                 let p = &mut *(ptr as *mut FLBPluginProxyDef);
                 p.type_ = FLB_PROXY_OUTPUT_PLUGIN as c_int;
                 p.proxy = FLB_PROXY_GOLANG as c_int;
                 p.flags = 0;
+
                 let mut plugin_info = PluginInfo::default();
+
                 match handler.lock().unwrap().plugin_register(&mut plugin_info){
                     Ok(()) => {
-                        match CString::new(plugin_info.name.as_bytes()) {
-                            Ok(cname) => {
-                                p.name = cname.into_raw() as *mut _
-                            },
-                            _ => return FLB_ERROR as c_int,
+                        if let Ok(cname) = CString::new(plugin_info.name.as_bytes()) {
+                            p.name = cname.into_raw() as *mut _;
+                        } else {
+                            return FLB_ERROR as c_int;
                         }
 
-                        match CString::new(plugin_info.description.as_bytes()) {
-                            Ok(d) => {
-                                p.description = d.into_raw() as *mut _;
-
-                            },
-                            _ => return FLB_ERROR as c_int,
+                        if let Ok(d) = CString::new(plugin_info.description.as_bytes()) {
+                            p.description = d.into_raw() as *mut _;
+                        } else {
+                            return FLB_ERROR as c_int;
                         }
                     },
                     Err(e) => return i32::from(e)  as c_int,
                 }
                 FLB_OK as c_int
-            }
+            }).unwrap()
         }
 
         #[no_mangle]
         pub extern fn FLBPluginInit(ptr: *mut c_void) -> c_int {
-            match handler.lock().unwrap().plugin_init(){
-                Ok(()) => FLB_OK as c_int,
-                Err(e) => return i32::from(e) as c_int,
-            }
+            catch(|| {
+                if let Err(e) = handler.lock().unwrap().plugin_init(){
+                    return i32::from(e) as c_int;
+                }
+                FLB_OK as c_int
+            }).unwrap()
         }
 
         #[no_mangle]
         pub extern fn FLBPluginFlush(data: *mut c_void, length: c_int, tag: *const c_char) -> c_int {
-            unsafe{
+            catch( || unsafe {
                 let bytes = slice::from_raw_parts(data as *const _, length as usize);
-                match handler.lock().unwrap().plugin_flush(bytes){
-                    Ok(()) => FLB_OK as c_int,
-                    Err(e) => return i32::from(e)  as c_int,
+                if let Err(e) = handler.lock().unwrap().plugin_flush(bytes){
+                    return i32::from(e)  as c_int;
                 }
-            }
+                FLB_OK as c_int
+            }).unwrap()
         }
 
         #[no_mangle]
         pub extern fn FLBPluginExit() -> c_int {
-            match handler.lock().unwrap().plugin_exit(){
-                Ok(()) => FLB_OK as c_int,
-                Err(e) => return i32::from(e) as c_int,
-            }
+            catch( || {
+                if let Err(e) = handler.lock().unwrap().plugin_exit(){
+                    return i32::from(e) as c_int;
+                }
+                FLB_OK as c_int
+            }).unwrap()
         }
     }
 }

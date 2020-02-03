@@ -19,3 +19,8 @@ lazy_static = "1.3.0"
 [lib]
 crate-type=["rlib", "cdylib"]
 
+[profile.dev]
+panic = "unwind"
+
+[profile.release]
+panic = "unwind"

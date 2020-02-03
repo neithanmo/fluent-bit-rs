@@ -8,8 +8,8 @@
 //! A simple Hello world example which prints data to stdout, it involves following three steps:
 //! - Create a struct/enum with the data you might use for processing the incoming buffer from Fluent-bit
 //! - Implement the trait *FLBPluginMethods* for that struct/enum.
-//! - After steps 1 and 2, call the macro create_boilerplate!() which will generate the boilerplate code that every plugin should have, 
-//!   taking care of the unsafe safe code and abstracting it into a safe Rust style. 
+//! - After steps 1 and 2, call the macro create_boilerplate!() which will generate the boilerplate code that every plugin should have,
+//!   taking care of the unsafe safe code and abstracting it into a safe Rust style.
 //!   This macro will accept as an argument any type which implements the FLBPluginMethods trait
 //!
 //! And that's all. Compile your plugin as a dynamic library by adding this line to your Cargo.toml
@@ -49,16 +49,16 @@
 //! ```
 //! extern crate fluentbit;
 //! use fluentbit::*;
-//! 
+//!
 //! extern crate rmpv;
 //! extern crate serde_json;
-//! 
+//!
 //! extern crate serde;
-//! 
-//! 
+//!
+//!
 //! #[derive(Default)]
 //! struct JsonExample{}
-//! 
+//!
 //! impl FLBPluginMethods for JsonExample{
 //!     
 //!     fn plugin_register(&mut self, info: &mut PluginInfo) -> FLBResult{
@@ -66,14 +66,14 @@
 //!         info.description = "This is a default description".into();
 //!         Ok(())
 //!     }
-//! 
+//!
 //!     fn plugin_init(&mut self) -> FLBResult{
 //!         println!("default init");
 //!         Ok(())
 //!     }
-//! 
+//!
 //!     fn plugin_flush(&mut self, data: &[u8]) -> FLBResult{
-//! 
+//!
 //!         let mut value = data.clone();
 //!         let value: rmpv::Value = rmpv::decode::value::read_value(&mut value).unwrap();
 //!         let json = serde_json::to_string_pretty(&value).unwrap();
@@ -81,14 +81,14 @@
 //!         println!("{}", json);
 //!         Ok(())
 //!     }
-//! 
+//!
 //!     fn plugin_exit(&mut self) -> FLBResult{
 //!         println!("exiting");
 //!         Ok(())
 //!     }
 //!     
 //! }
-//! 
+//!
 //! create_boilerplate!(JsonExample::default());
 //! ```
 //!
