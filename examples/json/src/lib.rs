@@ -20,12 +20,12 @@ impl FLBPluginMethods for JsonExample {
         Ok(())
     }
 
-    fn plugin_flush(&mut self, data: &[u8]) -> FLBResult {
+    fn plugin_flush(&mut self, data: &[u8], tag: &str) -> FLBResult {
         let mut value = data.clone();
         let value: rmpv::Value = rmpv::decode::value::read_value(&mut value).unwrap();
         let json = serde_json::to_string_pretty(&value).unwrap();
 
-        println!("\n{}", json);
+        println!("tag: {} - data: {} \n", tag, json);
 
         Ok(())
     }

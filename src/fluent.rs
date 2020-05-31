@@ -63,9 +63,10 @@ pub trait FLBPluginMethods {
     /// or you can implement a custom parser by using one of most parser libraries in the rust ecosystem.
     /// # Arguments
     /// * `data` A byte buffer with the message in a MsgPack format
+    /// * `tag` A str containing the tag from fluent-bit
     /// # Returns
     /// If the operation was successful an Ok(()) is returned otherwise FLBError
-    fn plugin_flush(&mut self, data: &[u8]) -> FLBResult;
+    fn plugin_flush(&mut self, data: &[u8], tag: &str) -> FLBResult;
 
     /// When Fluent Bit will stop using the instance of the plugin, it will trigger the exit callback.
     /// # Returns
@@ -208,7 +209,11 @@ macro_rules! create_boilerplate{
         pub extern fn FLBPluginFlush(data: *mut c_void, length: c_int, tag: *const c_char) -> c_int {
             catch( || unsafe {
                 let bytes = slice::from_raw_parts(data as *const _, length as usize);
-                if let Err(e) = handler.lock().unwrap().plugin_flush(bytes){
+                let tag = match CStr::from_ptr(tag).to_str() {
+                    Ok(str) => str,
+                    _ => return FLB_ERROR as c_int,
+                };
+                if let Err(e) = handler.lock().unwrap().plugin_flush(bytes, tag){
                     return i32::from(e)  as c_int;
                 }
                 FLB_OK as c_int
