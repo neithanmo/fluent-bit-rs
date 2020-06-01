@@ -95,6 +95,9 @@ pub trait FLBPluginMethods {
 
     /// Before the engine starts, it initialize all plugins that were requested to start
     /// Useful for initializing any data structure that would be used for this plugin during the processing
+    /// # Arguments
+    /// * `plugin` A reference to the inner plugin representation which could be used for getting
+    /// any parameter passed in to the plugin
     /// # Returns
     /// If the operation was successful an Ok(()) is returned otherwise FLBError
     fn plugin_init(&mut self, plugin: &FLBPlugin) -> FLBResult;
@@ -118,22 +121,29 @@ pub trait FLBPluginMethods {
     fn plugin_exit(&mut self) -> FLBResult;
 }
 
-pub trait FLBConfigParam {
-    fn config_param<T: AsRef<str>>(&self, key: T) -> Result<Option<String>, ()>;
-}
-
+/// Internal plugin pointer
+///
+/// This is passed in during the init function to
+/// get any parameter that is required during the plugin's
+/// initialization
 pub struct FLBPlugin {
     pub(crate) plugin_ptr: *mut libc::c_void,
 }
 
 impl FLBPlugin {
+    // Creates a new plugin ptr instance
+    //
+    // This method should not be called
+    // by the user.
     pub fn new(ptr: *mut c_void) -> Self {
         Self { plugin_ptr: ptr }
     }
-}
 
-impl FLBConfigParam for FLBPlugin {
-    fn config_param<K: AsRef<str>>(&self, key: K) -> Result<Option<String>, ()> {
+    /// Request the value of a param named *key*
+    /// # Returns
+    /// Returns and option if succeeded
+    /// or and error if the key is not valid.
+    pub fn config_param<K: AsRef<str>>(&self, key: K) -> Result<Option<String>, ()> {
         unsafe {
             let p = self.plugin_ptr as *mut flbgo_output_plugin;
             let key = CString::new(key.as_ref()).map_err(|_| ())?;
@@ -268,25 +278,8 @@ macro_rules! create_boilerplate{
                 p.proxy = FLB_PROXY_GOLANG as c_int;
                 p.flags = 0;
 
-                // match handler.lock().unwrap().plugin_register(&mut plugin_info){
-                //     Ok(()) => {
-                //         if let Ok(cname) = CString::new(plugin_info.name.as_bytes()) {
-                //             p.name = cname.into_raw() as *mut _;
-                //         } else {
-                //             return FLB_ERROR as c_int;
-                //         }
-
-                //         if let Ok(d) = CString::new(plugin_info.description.as_bytes()) {
-                //             p.description = d.into_raw() as *mut _;
-                //         } else {
-                //             return FLB_ERROR as c_int;
-                //         }
-                //     },
-                //     Err(e) => return i32::from(e)  as c_int,
-                // }
                 let _ = CString::from_raw(p.name);
                 let _ = CString::from_raw(p.description);
-                println!("unregistering plugin");
 
                 FLB_OK as c_int
             }).unwrap()

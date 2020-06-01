@@ -20,7 +20,7 @@
 //! ```
 //!
 //! Another thing that is worth to mention is that Fluent-bit should be able to load Go plugins even though
-//! your plugin was written in Rust. To enable external plugins'  support  you have to compile Fluent-bit with Goland support, e.g:
+//! your plugin is written in Rust. To enable external plugins'  support  you have to compile Fluent-bit with Goland support, e.g:
 //!
 //! ```
 //! $ cd build/
@@ -67,18 +67,25 @@
 //!         Ok(())
 //!     }
 //!
-//!     fn plugin_init(&mut self) -> FLBResult{
-//!         println!("default init");
+//!     fn plugin_init(&mut self, plugin: &FLBPlugin) -> FLBResult{
+//!         let param = plugin
+//!             .config_param("params")
+//!             .map_err(|_| FLBError::FLB_ERROR)?;
+//!         if let Some(p) = param {
+//!             println!("plugin init with parameter: {}", p);
+//!         } else {
+//!             println!("plugin init with no param");
+//!         }
 //!         Ok(())
 //!     }
 //!
-//!     fn plugin_flush(&mut self, data: &[u8]) -> FLBResult{
+//!     fn plugin_flush(&mut self, data: &[u8], tag: &str) -> FLBResult{
 //!
 //!         let mut value = data.clone();
 //!         let value: rmpv::Value = rmpv::decode::value::read_value(&mut value).unwrap();
 //!         let json = serde_json::to_string_pretty(&value).unwrap();
 //!         
-//!         println!("{}", json);
+//!         println!("tag: {} - json: {}", tag, json);
 //!         Ok(())
 //!     }
 //!
@@ -95,7 +102,7 @@
 //! Test your plugin:
 //! ```
 //! cargo build --release
-//! fluent-bit -e target/release/libexample.so -i cpu -o "rustout"
+//! fluent-bit -e target/release/libexample.so -i cpu -o "rustout" --prop="params=MyParam"
 //! ```
 
 mod fluent;
