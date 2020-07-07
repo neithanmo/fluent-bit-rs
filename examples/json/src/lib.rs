@@ -1,9 +1,7 @@
-extern crate fluentbit;
 use fluentbit::*;
 
-extern crate rmpv;
-extern crate serde;
-extern crate serde_json;
+use rmpv;
+use serde_json;
 
 #[derive(Default)]
 struct JsonExample {}
@@ -15,17 +13,25 @@ impl FLBPluginMethods for JsonExample {
         Ok(())
     }
 
-    fn plugin_init(&mut self) -> FLBResult {
+    fn plugin_init(&mut self, plugin: &FLBPlugin) -> FLBResult {
         println!("default init");
+        let param = plugin
+            .config_param("params")
+            .map_err(|_| FLBError::FLB_ERROR)?;
+        if let Some(p) = param {
+            println!("parameter {}", p);
+        } else {
+            println!("no params");
+        }
         Ok(())
     }
 
-    fn plugin_flush(&mut self, data: &[u8]) -> FLBResult {
+    fn plugin_flush(&mut self, data: &[u8], tag: &str) -> FLBResult {
         let mut value = data.clone();
         let value: rmpv::Value = rmpv::decode::value::read_value(&mut value).unwrap();
         let json = serde_json::to_string_pretty(&value).unwrap();
 
-        println!("\n{}", json);
+        println!("tag: {} - data: {} \n", tag, json);
 
         Ok(())
     }
